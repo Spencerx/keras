@@ -1232,6 +1232,10 @@ class NumpyOneInputOpsDynamicShapeTest(testing.TestCase):
         x = np.random.randint(1, 100 + 1)
         self.assertEqual(knp.hamming(x).shape[0], x)
 
+    def test_hanning(self):
+        x = np.random.randint(1, 100 + 1)
+        self.assertEqual(knp.hanning(x).shape[0], x)
+
     def test_kaiser(self):
         x = np.random.randint(1, 100 + 1)
         beta = float(np.random.randint(10, 20 + 1))
@@ -1308,6 +1312,10 @@ class NumpyOneInputOpsDynamicShapeTest(testing.TestCase):
     def test_copy(self):
         x = KerasTensor((None, 3))
         self.assertEqual(knp.copy(x).shape, (None, 3))
+
+    def test_corrcoef(self):
+        x = KerasTensor((3, None))
+        self.assertEqual(knp.corrcoef(x).shape, (3, None))
 
     def test_cos(self):
         x = KerasTensor((None, 3))
@@ -2740,7 +2748,7 @@ class NumpyTwoInputOpsCorrectnessTest(testing.TestCase):
 
         self.assertAllClose(knp.FullLike()(x, 2), np.full_like(x, 2))
         self.assertAllClose(
-            knp.FullLike()(x, 2, dtype="float32"),
+            knp.FullLike(dtype="float32")(x, 2),
             np.full_like(x, 2, dtype="float32"),
         )
         self.assertAllClose(
@@ -3625,6 +3633,12 @@ class NumpyOneInputOpsCorrectnessTest(testing.TestCase):
 
         self.assertAllClose(knp.Hamming()(x), np.hamming(x))
 
+    def test_hanning(self):
+        x = np.random.randint(1, 100 + 1)
+        self.assertAllClose(knp.hanning(x), np.hanning(x))
+
+        self.assertAllClose(knp.Hanning()(x), np.hanning(x))
+
     def test_kaiser(self):
         x = np.random.randint(1, 100 + 1)
         beta = float(np.random.randint(10, 20 + 1))
@@ -3827,6 +3841,11 @@ class NumpyOneInputOpsCorrectnessTest(testing.TestCase):
         x = np.array([[1, 2, 3], [3, 2, 1]])
         self.assertAllClose(knp.copy(x), np.copy(x))
         self.assertAllClose(knp.Copy()(x), np.copy(x))
+
+    def test_corrcoef(self):
+        x = np.array([[1, 2, 3], [3, 2, 1]])
+        self.assertAllClose(knp.corrcoef(x), np.corrcoef(x))
+        self.assertAllClose(knp.Corrcoef()(x), np.corrcoef(x))
 
     def test_cos(self):
         x = np.array([[1, 2, 3], [3, 2, 1]])
@@ -4910,35 +4929,29 @@ class NumpyOneInputOpsCorrectnessTest(testing.TestCase):
 class NumpyArrayCreateOpsCorrectnessTest(testing.TestCase):
     def test_ones(self):
         self.assertAllClose(knp.ones([2, 3]), np.ones([2, 3]))
-        self.assertAllClose(knp.Ones()([2, 3]), np.ones([2, 3]))
 
     def test_zeros(self):
         self.assertAllClose(knp.zeros([2, 3]), np.zeros([2, 3]))
-        self.assertAllClose(knp.Zeros()([2, 3]), np.zeros([2, 3]))
 
     def test_eye(self):
         self.assertAllClose(knp.eye(3), np.eye(3))
         self.assertAllClose(knp.eye(3, 4), np.eye(3, 4))
         self.assertAllClose(knp.eye(3, 4, 1), np.eye(3, 4, 1))
 
-        self.assertAllClose(knp.Eye()(3), np.eye(3))
-        self.assertAllClose(knp.Eye()(3, 4), np.eye(3, 4))
-        self.assertAllClose(knp.Eye(k=1)(3, 4), np.eye(3, 4, k=1))
-
         # Test k >= N
-        self.assertAllClose(knp.Eye(k=3)(3), np.eye(3, k=3))
+        self.assertAllClose(knp.eye(3, k=3), np.eye(3, k=3))
 
         # Test k > 0 and N >= M
-        self.assertAllClose(knp.Eye(k=1)(3), np.eye(3, k=1))
+        self.assertAllClose(knp.eye(3, k=1), np.eye(3, k=1))
 
         # Test k > 0 and N < M and N + k > M
-        self.assertAllClose(knp.Eye(k=2)(3, 4), np.eye(3, 4, k=2))
+        self.assertAllClose(knp.eye(3, 4, k=2), np.eye(3, 4, k=2))
 
         # Test k < 0 and M >= N
-        self.assertAllClose(knp.Eye(k=-1)(3), np.eye(3, k=-1))
+        self.assertAllClose(knp.eye(3, k=-1), np.eye(3, k=-1))
 
         # Test k < 0 and M < N and M - k > N
-        self.assertAllClose(knp.Eye(k=-2)(4, 3), np.eye(4, 3, k=-2))
+        self.assertAllClose(knp.eye(4, 3, k=-2), np.eye(4, 3, k=-2))
 
     def test_arange(self):
         self.assertAllClose(knp.arange(3), np.arange(3))
@@ -4962,34 +4975,29 @@ class NumpyArrayCreateOpsCorrectnessTest(testing.TestCase):
             np.full([2, 3], np.array([1, 4, 5])),
         )
 
-        self.assertAllClose(knp.Full()([2, 3], 0), np.full([2, 3], 0))
-        self.assertAllClose(knp.Full()([2, 3], 0.1), np.full([2, 3], 0.1))
+        self.assertAllClose(knp.Full([2, 3])(0), np.full([2, 3], 0))
+        self.assertAllClose(knp.Full([2, 3])(0.1), np.full([2, 3], 0.1))
         self.assertAllClose(
-            knp.Full()([2, 3], np.array([1, 4, 5])),
+            knp.Full([2, 3])(np.array([1, 4, 5])),
             np.full([2, 3], np.array([1, 4, 5])),
         )
 
     def test_identity(self):
         self.assertAllClose(knp.identity(3), np.identity(3))
-        self.assertAllClose(knp.Identity()(3), np.identity(3))
 
     def test_tri(self):
         self.assertAllClose(knp.tri(3), np.tri(3))
         self.assertAllClose(knp.tri(3, 4), np.tri(3, 4))
         self.assertAllClose(knp.tri(3, 4, 1), np.tri(3, 4, 1))
 
-        self.assertAllClose(knp.Tri()(3), np.tri(3))
-        self.assertAllClose(knp.Tri()(3, 4), np.tri(3, 4))
-        self.assertAllClose(knp.Tri(k=1)(3, 4), np.tri(3, 4, 1))
-
         # Test k < 0
-        self.assertAllClose(knp.Tri(k=-1)(3), np.tri(3, k=-1))
+        self.assertAllClose(knp.tri(3, k=-1), np.tri(3, k=-1))
 
         # Test -k-1 > N
-        self.assertAllClose(knp.Tri(k=-5)(3), np.tri(3, k=-5))
+        self.assertAllClose(knp.tri(3, k=-5), np.tri(3, k=-5))
 
         # Test k > M
-        self.assertAllClose(knp.Tri(k=4)(3), np.tri(3, k=4))
+        self.assertAllClose(knp.tri(3, k=4), np.tri(3, k=4))
 
 
 def create_sparse_tensor(x, indices_from=None, start=0, delta=2):
@@ -5640,6 +5648,22 @@ class NumpyDtypeTest(testing.TestCase):
         )
 
     @parameterized.named_parameters(named_product(dtype=ALL_DTYPES))
+    def test_hanning(self, dtype):
+        import jax.numpy as jnp
+
+        x = knp.ones((), dtype=dtype)
+        x_jax = jnp.ones((), dtype=dtype)
+        expected_dtype = standardize_dtype(jnp.hanning(x_jax).dtype)
+
+        self.assertEqual(
+            standardize_dtype(knp.hanning(x).dtype), expected_dtype
+        )
+        self.assertEqual(
+            standardize_dtype(knp.Hanning().symbolic_call(x).dtype),
+            expected_dtype,
+        )
+
+    @parameterized.named_parameters(named_product(dtype=ALL_DTYPES))
     def test_kaiser(self, dtype):
         import jax.numpy as jnp
 
@@ -5925,12 +5949,6 @@ class NumpyDtypeTest(testing.TestCase):
             standardize_dtype(knp.ones([2, 3], dtype=dtype).dtype),
             expected_dtype,
         )
-        self.assertEqual(
-            standardize_dtype(
-                knp.Ones().symbolic_call([2, 3], dtype=dtype).dtype
-            ),
-            expected_dtype,
-        )
 
     @parameterized.named_parameters(named_product(dtype=ALL_DTYPES))
     def test_zeros(self, dtype):
@@ -5940,12 +5958,6 @@ class NumpyDtypeTest(testing.TestCase):
 
         self.assertEqual(
             standardize_dtype(knp.zeros([2, 3], dtype=dtype).dtype),
-            expected_dtype,
-        )
-        self.assertEqual(
-            standardize_dtype(
-                knp.Zeros().symbolic_call([2, 3], dtype=dtype).dtype
-            ),
             expected_dtype,
         )
 
@@ -6137,7 +6149,7 @@ class NumpyDtypeTest(testing.TestCase):
         )
         self.assertEqual(
             standardize_dtype(
-                knp.Arange().symbolic_call(start, stop, step, dtype).dtype
+                knp.Arange(dtype).symbolic_call(start, stop, step).dtype
             ),
             expected_dtype,
         )
@@ -6565,6 +6577,22 @@ class NumpyDtypeTest(testing.TestCase):
             expected_dtype,
         )
 
+    @parameterized.named_parameters(named_product(dtype=ALL_DTYPES))
+    def test_corrcoef(self, dtype):
+        import jax.numpy as jnp
+
+        x = knp.ones((2, 4), dtype=dtype)
+        x_jax = jnp.ones((2, 4), dtype=dtype)
+        expected_dtype = standardize_dtype(jnp.corrcoef(x_jax).dtype)
+
+        self.assertEqual(
+            standardize_dtype(knp.corrcoef(x).dtype), expected_dtype
+        )
+        self.assertEqual(
+            standardize_dtype(knp.Corrcoef().symbolic_call(x).dtype),
+            expected_dtype,
+        )
+
     @parameterized.named_parameters(
         named_product(dtypes=itertools.combinations(ALL_DTYPES, 2))
     )
@@ -6956,12 +6984,6 @@ class NumpyDtypeTest(testing.TestCase):
             standardize_dtype(knp.empty([2, 3], dtype=dtype).dtype),
             expected_dtype,
         )
-        self.assertEqual(
-            standardize_dtype(
-                knp.Empty().symbolic_call([2, 3], dtype=dtype).dtype
-            ),
-            expected_dtype,
-        )
 
     @parameterized.named_parameters(
         named_product(dtypes=itertools.combinations(ALL_DTYPES, 2))
@@ -7056,21 +7078,11 @@ class NumpyDtypeTest(testing.TestCase):
             standardize_dtype(knp.eye(3, dtype=dtype).dtype),
             expected_dtype,
         )
-        self.assertEqual(
-            standardize_dtype(knp.Eye(dtype=dtype).symbolic_call(3).dtype),
-            expected_dtype,
-        )
 
         expected_dtype = standardize_dtype(jnp.eye(3, 4, 1, dtype=dtype).dtype)
 
         self.assertEqual(
             standardize_dtype(knp.eye(3, 4, k=1, dtype=dtype).dtype),
-            expected_dtype,
-        )
-        self.assertEqual(
-            standardize_dtype(
-                knp.Eye(k=1, dtype=dtype).symbolic_call(3, 4).dtype
-            ),
             expected_dtype,
         )
 
@@ -7188,9 +7200,7 @@ class NumpyDtypeTest(testing.TestCase):
             expected_dtype,
         )
         self.assertEqual(
-            standardize_dtype(
-                knp.Full().symbolic_call((), 0, dtype=dtype).dtype
-            ),
+            standardize_dtype(knp.Full((), dtype=dtype).symbolic_call(0).dtype),
             expected_dtype,
         )
 
@@ -7283,12 +7293,6 @@ class NumpyDtypeTest(testing.TestCase):
 
         self.assertEqual(
             standardize_dtype(knp.identity(3, dtype=dtype).dtype),
-            expected_dtype,
-        )
-        self.assertEqual(
-            standardize_dtype(
-                knp.Identity().symbolic_call(3, dtype=dtype).dtype
-            ),
             expected_dtype,
         )
 
@@ -8614,10 +8618,6 @@ class NumpyDtypeTest(testing.TestCase):
 
         self.assertEqual(
             standardize_dtype(knp.tri(3, dtype=dtype).dtype),
-            expected_dtype,
-        )
-        self.assertEqual(
-            standardize_dtype(knp.Tri(dtype=dtype).symbolic_call(3).dtype),
             expected_dtype,
         )
 
